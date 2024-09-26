@@ -12,10 +12,11 @@ namespace BigWebApp.Areas.Admin.Controllers
     public class ProductController : Controller
     {
         private readonly IUnitOfWork _IUnitOfWork;      // We add dependency injection it will change ICategoryRepository to CategoryRepository. 
-
-        public ProductController(IUnitOfWork unitOfWork)
+        private readonly IWebHostEnvironment _webHostEnvironment; 
+        public ProductController(IUnitOfWork unitOfWork, IWebHostEnvironment webHostEnvironment)
         {
             _IUnitOfWork = unitOfWork;
+            _webHostEnvironment = webHostEnvironment;
         }
         public IActionResult Index()
         {
@@ -23,8 +24,9 @@ namespace BigWebApp.Areas.Admin.Controllers
             return View(objCategoryList);
         }
 
-        public ActionResult Create()
-        {            
+        public ActionResult Upsert(int? id)
+        {
+            
             ProductVM ProductVM = new()
             {
                 CategoryLists = _IUnitOfWork.Category.GetAll().Select(u =>
@@ -35,52 +37,58 @@ namespace BigWebApp.Areas.Admin.Controllers
                     }),
                 Product = new Product()
             };
-            return View(ProductVM);
+            if (id == null || id == 0)
+            {
+                // create
+                return View(ProductVM);
+            }
+            else
+            {
+                // update
+                ProductVM.Product = _IUnitOfWork.Product.Get(u => u.Id == id);
+                return View(ProductVM);
+            }
+
         }
 
         //post
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(ProductVM obj)
+        public ActionResult Upsert(ProductVM obj, IFormFile? File)
         {
-            if (ModelState.IsValid)
+           if (ModelState.IsValid)
             {
+                string wwwRootPath = _webHostEnvironment.WebRootPath;    // wwwroot path
+                if(File != null)
+                {
+                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(File.FileName);           // To give us random name for file. 
+                    string productPath = Path.Combine(wwwRootPath, @"images\product");                      // combine two strings into product path.
+
+
+                    // Open the file  and create it.
+                    using (var fileStream = new FileStream(Path.Combine(productPath, fileName),FileMode.Create)) { 
+                    File.CopyTo(fileStream);
+                    }
+                    obj.Product.ImageUrl = @"\images\product\" + fileName;    // save image in your local and in model database.
+                }
                 _IUnitOfWork.Product.Add(obj.Product);
                 _IUnitOfWork.Save();
                 return RedirectToAction("Index");
             }
-            return View(obj);
-        }
-
-        [HttpGet]
-        public ActionResult Edit(int? id)
-        {
-            if (id == null || id == 0)
+            else
             {
-                return NotFound();
-            }
-            var DataFromDb = _IUnitOfWork.Product.Get(u => u.Id == id);
-            if (DataFromDb == null)
-            {
-                return NotFound();
-            }
-            return View(DataFromDb);
 
-        }
+                obj.CategoryLists = _IUnitOfWork.Category.GetAll().Select(u =>
+                    new SelectListItem
+                    {
+                        Text = u.Name,
+                        Value = u.Id.ToString()
+                    });
 
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(Product obj)
-        {
-            if (ModelState.IsValid)
-            {
-                _IUnitOfWork.Product.Update(obj);
-                _IUnitOfWork.Save();
-                return RedirectToAction("Index");
+                return View(obj); 
             }
-            return View(obj);
-        }
+        } 
+
 
         [HttpGet]
         public ActionResult Delete(int? id)
