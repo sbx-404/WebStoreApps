@@ -4,6 +4,7 @@ using BigApp.Models;
 using BigApp.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.IdentityModel.Tokens;
 
 
 namespace BigWebApp.Areas.Admin.Controllers
@@ -20,7 +21,10 @@ namespace BigWebApp.Areas.Admin.Controllers
         }
         public IActionResult Index()
         {
-            IEnumerable<Product> objCategoryList = _IUnitOfWork.Product.GetAll().ToList();
+            //IEnumerable<Product> objCategoryList = _IUnitOfWork.Product.GetAll(includeProperties:"Category").ToList();
+            //List<Product> objCategoryList = _IUnitOfWork.Product.GetAll(includeProperties: "Category").ToList();
+
+            List<Product> objCategoryList = _IUnitOfWork.Product.GetAll("Category").ToList();
             return View(objCategoryList);
         }
 
@@ -64,6 +68,15 @@ namespace BigWebApp.Areas.Admin.Controllers
                     string fileName = Guid.NewGuid().ToString() + Path.GetExtension(File.FileName);           // To give us random name for file. 
                     string productPath = Path.Combine(wwwRootPath, @"images\product");                      // combine two strings into product path.
 
+                if (!string.IsNullOrEmpty(obj.Product.ImageUrl)) {
+
+                    //delete old image
+                    var oldImgPath = Path.Combine(wwwRootPath, obj.Product.ImageUrl.TrimStart('\\'));
+                    if (System.IO.File.Exists(oldImgPath))   //check if exist or not.
+                    {
+                        System.IO.File.Delete(oldImgPath);   // delete the file
+                    }
+                }
 
                     // Open the file  and create it.
                     using (var fileStream = new FileStream(Path.Combine(productPath, fileName),FileMode.Create)) { 
@@ -71,8 +84,19 @@ namespace BigWebApp.Areas.Admin.Controllers
                     }
                     obj.Product.ImageUrl = @"\images\product\" + fileName;    // save image in your local and in model database.
                 }
+
+                if (obj.Product.Id == 0)
+                {
                 _IUnitOfWork.Product.Add(obj.Product);
-                _IUnitOfWork.Save();
+
+                }
+                else
+                {
+                _IUnitOfWork.Product.Update(obj.Product);
+
+                }
+
+                _IUnitOfWork.Save();    
                 return RedirectToAction("Index");
             }
             else
@@ -127,6 +151,13 @@ namespace BigWebApp.Areas.Admin.Controllers
             _IUnitOfWork.Product.Remove(DataFromDb);
             _IUnitOfWork.Save();
             return RedirectToAction("Index");
+        }
+
+        //#region APICalls
+        [HttpGet]
+        public IActionResult Getall() {
+            List<Product> objCategoryList = _IUnitOfWork.Product.GetAll("Category").ToList();
+            return Json(new { data = objCategoryList }); 
         }
 
     }

@@ -15,10 +15,12 @@ namespace BigApp.DataAccess.Repository
         internal DbSet<T> dbSet;
         private readonly ApplicationDbContext _db;
 
-        public Repository(ApplicationDbContext db) { 
+        public Repository(ApplicationDbContext db) {
             _db = db;
             this.dbSet = _db.Set<T>();
             //_db.Categories == dbSet
+
+            _db.Products.Include(u => u.Category).Include(u => u.CategoryId);            //By default, when you fetch Products, the related Category entity is not loaded automatically. To load we use .include()
         }
 
 
@@ -27,30 +29,46 @@ namespace BigApp.DataAccess.Repository
             dbSet.Add(entity);
         }
 
-        public T Get(Expression<Func<T, bool>> filter)
+        public T Get(Expression<Func<T, bool>> filter, string? includeProperties = null)
         {
             IQueryable<T> query = dbSet;
             query = query.Where(filter);
-            return query.FirstOrDefault();
+            if (!string.IsNullOrEmpty(includeProperties))
+            {
+                foreach (var product in includeProperties
+                        .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))         // split char into comma seprerated
+                {
+                    query = query.Include(product);              // add properties
+                }
+            }
+                return query.FirstOrDefault();
         }
 
-        public IEnumerable<T> GetAll()
-        {
-            IQueryable<T> query = dbSet;
-            return query.ToList();
-        }
+            public IEnumerable<T> GetAll(string? includeProperties = null)
+            {
+                IQueryable<T> query = dbSet;
+                if (!string.IsNullOrEmpty(includeProperties))
+                {
+                    foreach (var product in includeProperties
+                            .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))         // split char into comma seprerated
+                    {
+                        query = query.Include(product);              // add properties
+                    }
+                }
+                return query.ToList();
+            }
 
-        public void Remove(T entity)
-        {
-            var query = dbSet;
-            query.Remove(entity);
+            public void Remove(T entity)
+            {
+                var query = dbSet;
+                query.Remove(entity);
 
-        }
+            }
 
-        public void RemoveRange(IEnumerable<T> entity)
-        {
-            var query = dbSet;
-            query.RemoveRange(entity);
+            public void RemoveRange(IEnumerable<T> entity)
+            {
+                var query = dbSet;
+                query.RemoveRange(entity);
+            }
         }
-    }
-}
+    } 

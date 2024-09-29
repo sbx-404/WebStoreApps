@@ -43,7 +43,7 @@ namespace BigApp.Models
         public int CategoryId { get; set; }
         [ForeignKey("CategoryId")]
         [ValidateNever]
-        public Category Category { get; set; }
+        public Category Category { get; set; }    // Navigation property
         [ValidateNever]
         public string  ImageUrl { get; set; }
     }
