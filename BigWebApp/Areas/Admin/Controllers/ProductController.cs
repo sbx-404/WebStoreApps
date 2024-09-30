@@ -2,6 +2,7 @@
 using BigApp.DataAccess.Repository.IRepository;
 using BigApp.Models;
 using BigApp.Models.ViewModels;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.IdentityModel.Tokens;
@@ -24,13 +25,13 @@ namespace BigWebApp.Areas.Admin.Controllers
             //IEnumerable<Product> objCategoryList = _IUnitOfWork.Product.GetAll(includeProperties:"Category").ToList();
             //List<Product> objCategoryList = _IUnitOfWork.Product.GetAll(includeProperties: "Category").ToList();
 
-            List<Product> objCategoryList = _IUnitOfWork.Product.GetAll("Category").ToList();
+            //List<Product> objCategoryList = _IUnitOfWork.Product.GetAll("Category").ToList();
+            IEnumerable<Product> objCategoryList = _IUnitOfWork.Product.GetAll("Category").ToList();
             return View(objCategoryList);
         }
 
         public ActionResult Upsert(int? id)
         {
-            
             ProductVM ProductVM = new()
             {
                 CategoryLists = _IUnitOfWork.Category.GetAll().Select(u =>
@@ -46,13 +47,13 @@ namespace BigWebApp.Areas.Admin.Controllers
                 // create
                 return View(ProductVM);
             }
-            else
+            if (id != null)
             {
                 // update
                 ProductVM.Product = _IUnitOfWork.Product.Get(u => u.Id == id);
                 return View(ProductVM);
             }
-
+            return View(ProductVM);
         }
 
         //post
@@ -96,7 +97,9 @@ namespace BigWebApp.Areas.Admin.Controllers
 
                 }
 
-                _IUnitOfWork.Save();    
+                _IUnitOfWork.Save();
+                 TempData["success"] = "Product Created successfully";
+
                 return RedirectToAction("Index");
             }
             else
@@ -111,24 +114,26 @@ namespace BigWebApp.Areas.Admin.Controllers
 
                 return View(obj); 
             }
-        } 
-
-
-        [HttpGet]
-        public ActionResult Delete(int? id)
-        {
-            if (id == null || id == 0)
-            {
-                return NotFound();
-            }
-            var DataFromDb = _IUnitOfWork.Product.Get(u => u.Id == id);
-            if (DataFromDb == null)
-            {
-                return NotFound();
-            }
-            return View(DataFromDb);
-
         }
+
+
+        //[HttpGet]
+        //public ActionResult Delete(int? id)
+        //{
+        //    if (id == null || id == 0)
+        //    {
+        //        return NotFound();
+        //    }
+        //    var DataFromDb = _IUnitOfWork.Product.Get(u => u.Id == id);
+        //    if (DataFromDb == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    return View(DataFromDb);
+
+        //}
+
+
         // [HttpPost]
         // [ValidateAntiForgeryToken]
         // public ActionResult Delete (StudentTable obj)
@@ -138,27 +143,55 @@ namespace BigWebApp.Areas.Admin.Controllers
         //         return RedirectToAction("Index");
         // }
 
+
         // this another way to delete data
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public ActionResult DeletePost(int? id)
-        {
-            var DataFromDb = _IUnitOfWork.Product.Get(u => u.Id == id);
-            if (DataFromDb == null)
-            {
-                return NotFound();
-            }
-            _IUnitOfWork.Product.Remove(DataFromDb);
-            _IUnitOfWork.Save();
-            return RedirectToAction("Index");
-        }
+        //[HttpPost, ActionName("Delete")]
+        //[ValidateAntiForgeryToken]
+        //public ActionResult DeletePost(int? id)
+        //{
+        //    var DataFromDb = _IUnitOfWork.Product.Get(u => u.Id == id);
+        //    if (DataFromDb == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    _IUnitOfWork.Product.Remove(DataFromDb);
+        //    _IUnitOfWork.Save();
+        //    return RedirectToAction("Index");
+        //}
 
-        //#region APICalls
+        
+        ////#region APICalls
+        
         [HttpGet]
-        public IActionResult Getall() {
-            List<Product> objCategoryList = _IUnitOfWork.Product.GetAll("Category").ToList();
-            return Json(new { data = objCategoryList }); 
+        public IActionResult Getall()
+        {
+            IEnumerable<Product> objCategoryList = _IUnitOfWork.Product.GetAll("Category").ToList();
+            return Json(new { data = objCategoryList });
         }
 
+
+        [HttpDelete]
+        public IActionResult Delete(int? id)
+        {
+            var productToBeDeleted = _IUnitOfWork.Product.Get(u => u.Id == id);
+            if(productToBeDeleted == null)  
+            {
+                return Json(new { success = false, message = "Error while deleting" });
+            }
+
+            //delete old image
+            var oldImgPath = Path.Combine(_webHostEnvironment.WebRootPath , productToBeDeleted.ImageUrl.TrimStart('\\'));
+            if (System.IO.File.Exists(oldImgPath))   //check if exist or not.
+            {
+                System.IO.File.Delete(oldImgPath);   // delete the file
+            }
+
+            _IUnitOfWork.Product.Remove(productToBeDeleted);
+            _IUnitOfWork.Save();
+
+            return Json(new { success = true, message = "Delete successful" });
+
+        }
+            //Api End here
     }
 }

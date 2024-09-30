@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - BigWebApp</title>
     <link rel="stylesheet" href="//cdn.datatables.net/2.1.7/css/dataTables.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/BigWebApp.styles.css" asp-append-version="true" />
 
@@ -41,6 +43,10 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
+
+           @*  // toastr notification *@
+            <partial name="_Notification" />   
+
             @RenderBody()
         </main>
     </div>
@@ -54,6 +60,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="//cdn.datatables.net/2.1.7/js/dataTables.min.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>  
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.tiny.cloud/1/smgeyggcb3srt0gzwo8esyzxkcrxmpdwtvdzkj7n00byp057/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -1,7 +1,7 @@
 ﻿@model ProductVM
 
 <form method="post" enctype="multipart/form-data">
-    <input asp-for="Product.Id" hidden/>
+    <input asp-for="@Model.Product.Id" hidden/>       @* // some app doesn't get the id so use @Model to get id. *@
     <input asp-for="Product.ImageUrl" hidden /> 
 
     <div class="row">
@@ -120,6 +120,9 @@
             ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
         });
     </script>
+    @{
+        <partial name="_ValidationScriptsPartial" />
+    }
 
 } 
 
