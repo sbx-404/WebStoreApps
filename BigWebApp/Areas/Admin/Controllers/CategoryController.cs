@@ -1,6 +1,8 @@
 ﻿using BigApp.DataAccess.Data;
 using BigApp.DataAccess.Repository.IRepository;
 using BigApp.Models;
+using BigApp.Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -8,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace BigWebApp.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SD.Role_Admin)]
     public class CategoryController : Controller
     {
         private readonly IUnitOfWork _IUnitOfWork;      // We add dependency injection it will change ICategoryRepository to CategoryRepository. 
